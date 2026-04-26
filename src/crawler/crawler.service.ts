@@ -1,12 +1,35 @@
-import {Injectable} from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import Redis from 'ioredis';
 
 //import $ from 'cheerio';
 import cheerio from 'cheerio';
 
+const CACHE_TTL_SECONDS = 60 * 60; // 1 hour
+
 @Injectable()
-export class CrawlerService {
+export class CrawlerService implements OnModuleInit, OnModuleDestroy {
+  private redis: Redis;
   private recipeData: Object = {};
+
+  constructor(private readonly config: ConfigService) {}
+
+  onModuleInit() {
+    this.redis = new Redis({
+      host: this.config.get<string>('REDIS_HOST', 'localhost'),
+      port: this.config.get<number>('REDIS_PORT', 6379),
+    });
+  }
+
+  onModuleDestroy() {
+    this.redis.quit();
+  }
+
   public async crawl({ url }) /*: RecipeModel*/ {
+    const cached = await this.redis.get(url);
+    if (cached) return JSON.parse(cached);
+
+    this.recipeData = {};
     await fetch(url)
       .then((result) => result.text())
       .then((html) => {
@@ -50,6 +73,10 @@ export class CrawlerService {
       .catch((error) => {
         console.log(error);
       });
+
+    if (Object.keys(this.recipeData).length > 0) {
+      await this.redis.setex(url, CACHE_TTL_SECONDS, JSON.stringify(this.recipeData));
+    }
 
     return this.recipeData;
   }

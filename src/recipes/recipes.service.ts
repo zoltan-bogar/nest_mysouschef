@@ -1,92 +1,56 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
-  UnprocessableEntityException,
   Logger,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Recipe } from './recipe.entity';
 import { RecipeModel } from './recipes.interface';
 
 @Injectable()
 export class RecipesService {
-  private recipes: Array<RecipeModel> = [];
   private readonly logger = new Logger(RecipesService.name);
 
-  public findAll(): Array<RecipeModel> {
-    return this.recipes;
+  constructor(
+    @InjectRepository(Recipe)
+    private readonly recipeRepository: Repository<Recipe>,
+  ) {}
+
+  findAll(): Promise<Recipe[]> {
+    return this.recipeRepository.find();
   }
 
-  public findOne(id: number): RecipeModel {
-    const recipe: RecipeModel = this.recipes.find((recipe) => recipe.id === id);
-
-    if (!recipe) {
-      throw new NotFoundException('Recipe not found.');
-    }
-
+  async findOne(id: number): Promise<Recipe> {
+    const recipe = await this.recipeRepository.findOneBy({ id });
+    if (!recipe) throw new NotFoundException('Recipe not found.');
     return recipe;
   }
 
-  public create(recipe: RecipeModel): RecipeModel {
-    // if the title is already in use by another recipe
-    const titleExists: boolean = this.recipes.some(
-      (item) => item.title === recipe.title,
-    );
-    if (titleExists) {
-      throw new UnprocessableEntityException('Recipe title already exists.');
+  async create(recipe: RecipeModel): Promise<Recipe> {
+    if (recipe.url) {
+      const existing = await this.recipeRepository.findOneBy({ url: recipe.url });
+      if (existing) {
+        throw new ConflictException({
+          message: 'A recipe from this URL is already saved.',
+          existingId: existing.id,
+          existingTitle: existing.title,
+        });
+      }
     }
-
-    // find the next id for a new blog recipe
-    const maxId: number = Math.max(
-      ...this.recipes.map((recipe) => recipe.id),
-      0,
-    );
-    const id: number = maxId + 1;
-
-    const recipeItem: RecipeModel = {
-      ...recipe,
-      id,
-    };
-
-    this.recipes.push(recipeItem);
-
-    return recipeItem;
+    return this.recipeRepository.save(recipe);
   }
 
-  public delete(id: number): void {
-    const index: number = this.recipes.findIndex((recipe) => recipe.id === id);
-
-    // -1 is returned when no findIndex() match is found
-    if (index === -1) {
-      throw new NotFoundException('Recipe not found.');
-    }
-
-    this.recipes.splice(index, 1);
+  async delete(id: number): Promise<void> {
+    const result = await this.recipeRepository.delete(id);
+    if (result.affected === 0) throw new NotFoundException('Recipe not found.');
   }
 
-  public update(id: number, recipe: RecipeModel): RecipeModel {
+  async update(id: number, recipe: RecipeModel): Promise<Recipe> {
     this.logger.log(`Updating recipe with id: ${id}`);
-
-    const index: number = this.recipes.findIndex((recipe) => recipe.id === id);
-
-    // -1 is returned when no findIndex() match is found
-    if (index === -1) {
-      throw new NotFoundException('Recipe not found.');
-    }
-
-    // if the title is already in use by another recipe
-    const titleExists: boolean = this.recipes.some(
-      (item) => item.title === recipe.title && item.id !== id,
-    );
-    if (titleExists) {
-      throw new UnprocessableEntityException('Recipe title already exists.');
-    }
-
-    const recipeItem: RecipeModel = {
-      ...recipe,
-      id,
-    };
-
-    this.recipes[index] = recipeItem;
-
-    return recipeItem;
+    await this.findOne(id);
+    await this.recipeRepository.update(id, recipe);
+    return this.findOne(id);
   }
 }

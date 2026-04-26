@@ -1,6 +1,7 @@
 export interface RecipeModel {
   id?: number;
-  data: object;
+  url?: string;
   title: string;
   category: string;
+  data: object;
 }
