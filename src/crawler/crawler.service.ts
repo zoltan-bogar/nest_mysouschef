@@ -15,10 +15,13 @@ export class CrawlerService implements OnModuleInit, OnModuleDestroy {
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit() {
-    this.redis = new Redis({
-      host: this.config.get<string>('REDIS_HOST', 'localhost'),
-      port: this.config.get<number>('REDIS_PORT', 6379),
-    });
+    const url = this.config.get<string>('REDIS_URL');
+    this.redis = url
+      ? new Redis(url, { tls: url.startsWith('rediss://') ? {} : undefined })
+      : new Redis({
+          host: this.config.get<string>('REDIS_HOST', 'localhost'),
+          port: this.config.get<number>('REDIS_PORT', 6379),
+        });
   }
 
   onModuleDestroy() {
