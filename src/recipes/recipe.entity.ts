@@ -26,6 +26,9 @@ export class Recipe {
   @Column({ type: 'jsonb', nullable: true })
   data: object;
 
+  @Column({ nullable: true })
+  userId: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

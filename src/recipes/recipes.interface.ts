@@ -11,4 +11,5 @@ export interface RecipeModel {
   category: string;
   ingredients?: Ingredient[];
   data: object;
+  userId?: number;
 }

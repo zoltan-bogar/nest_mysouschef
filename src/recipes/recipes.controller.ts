@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   ParseIntPipe,
   Post,
@@ -11,19 +12,36 @@ import {
 import { RecipesService } from './recipes.service';
 import { RecipeModel } from './recipes.interface';
 import { Recipe } from './recipe.entity';
+import { UsersService } from '../users/users.service';
 
 @Controller('recipes')
 export class RecipesController {
-  constructor(private readonly recipesService: RecipesService) {}
+  constructor(
+    private readonly recipesService: RecipesService,
+    private readonly usersService: UsersService,
+  ) {}
+
+  private async resolveUserId(email?: string): Promise<number | undefined> {
+    if (!email) return undefined;
+    const user = await this.usersService.findByEmail(email);
+    return user?.id;
+  }
 
   @Post()
-  public create(@Body() recipe: RecipeModel): Promise<Recipe> {
-    return this.recipesService.create(recipe);
+  public async create(
+    @Headers('x-user-email') email: string | undefined,
+    @Body() recipe: RecipeModel,
+  ): Promise<Recipe> {
+    const userId = await this.resolveUserId(email);
+    return this.recipesService.create(recipe, userId);
   }
 
   @Get()
-  public findAll(): Promise<Recipe[]> {
-    return this.recipesService.findAll();
+  public async findAll(
+    @Headers('x-user-email') email: string | undefined,
+  ): Promise<Recipe[]> {
+    const userId = await this.resolveUserId(email);
+    return this.recipesService.findAll(userId);
   }
 
   @Get(':id')

@@ -6,8 +6,11 @@ import { AppService } from './app.service';
 import { RecipesModule } from './recipes/recipes.module';
 import { CrawlerModule } from './crawler/crawler.module';
 import { MealPlansModule } from './meal-plans/meal-plans.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 import { Recipe } from './recipes/recipe.entity';
 import { MealPlan } from './meal-plans/meal-plan.entity';
+import { User } from './users/user.entity';
 
 @Module({
   imports: [
@@ -22,13 +25,15 @@ import { MealPlan } from './meal-plans/meal-plan.entity';
         username: config.get<string>('DB_USER'),
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
-        entities: [Recipe, MealPlan],
+        entities: [Recipe, MealPlan, User],
         synchronize: config.get<string>('NODE_ENV') !== 'production',
       }),
     }),
     RecipesModule,
     CrawlerModule,
     MealPlansModule,
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
