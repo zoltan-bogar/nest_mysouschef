@@ -11,6 +11,15 @@ export class User {
   @Column()
   passwordHash: string;
 
+  @Column({ default: 'free' })
+  tier: 'free' | 'pro' | 'expert';
+
+  @Column({ default: 0 })
+  scansUsedThisMonth: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  scansResetAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

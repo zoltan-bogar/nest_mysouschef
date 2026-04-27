@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Headers,
   Param,
@@ -33,6 +34,15 @@ export class RecipesController {
     @Body() recipe: RecipeModel,
   ): Promise<Recipe> {
     const userId = await this.resolveUserId(email);
+    if (userId) {
+      const user = await this.usersService.findByEmail(email!);
+      if (user?.tier === 'free') {
+        const count = await this.recipesService.countByUser(userId);
+        if (count >= 5) {
+          throw new ForbiddenException({ message: 'Recipe limit reached.', code: 'RECIPE_LIMIT_REACHED' });
+        }
+      }
+    }
     return this.recipesService.create(recipe, userId);
   }
 

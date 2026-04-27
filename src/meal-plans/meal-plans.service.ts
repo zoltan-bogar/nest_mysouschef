@@ -10,19 +10,20 @@ export class MealPlansService {
     private readonly repo: Repository<MealPlan>,
   ) {}
 
-  async getWeekPlan(weekStart: string): Promise<MealPlan | null> {
-    return this.repo.findOneBy({ weekStart });
+  async getWeekPlan(weekStart: string, userId?: number): Promise<MealPlan | null> {
+    return this.repo.findOneBy({ weekStart, userId: userId ?? null });
   }
 
   async saveWeekPlan(
     weekStart: string,
     plan: Record<string, Record<string, number | null>>,
+    userId?: number,
   ): Promise<MealPlan> {
-    const existing = await this.repo.findOneBy({ weekStart });
+    const existing = await this.repo.findOneBy({ weekStart, userId: userId ?? null });
     if (existing) {
       existing.plan = plan;
       return this.repo.save(existing);
     }
-    return this.repo.save({ weekStart, plan });
+    return this.repo.save({ weekStart, plan, userId: userId ?? null });
   }
 }

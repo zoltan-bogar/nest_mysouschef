@@ -8,6 +8,7 @@ import { CrawlerModule } from './crawler/crawler.module';
 import { MealPlansModule } from './meal-plans/meal-plans.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { ScanModule } from './scan/scan.module';
 import { Recipe } from './recipes/recipe.entity';
 import { MealPlan } from './meal-plans/meal-plan.entity';
 import { User } from './users/user.entity';
@@ -34,6 +35,7 @@ import { User } from './users/user.entity';
     MealPlansModule,
     UsersModule,
     AuthModule,
+    ScanModule,
   ],
   controllers: [AppController],
   providers: [AppService],

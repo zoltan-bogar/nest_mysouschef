@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Recipe } from './recipe.entity';
 import { RecipeModel } from './recipes.interface';
 
@@ -18,11 +18,13 @@ export class RecipesService {
     private readonly recipeRepository: Repository<Recipe>,
   ) {}
 
+  countByUser(userId: number): Promise<number> {
+    return this.recipeRepository.count({ where: { userId } });
+  }
+
   findAll(userId?: number): Promise<Recipe[]> {
     if (!userId) return this.recipeRepository.find();
-    return this.recipeRepository.find({
-      where: [{ userId }, { userId: IsNull() }],
-    });
+    return this.recipeRepository.find({ where: { userId } });
   }
 
   async findOne(id: number): Promise<Recipe> {

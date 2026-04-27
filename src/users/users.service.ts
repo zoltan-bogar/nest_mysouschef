@@ -14,4 +14,42 @@ export class UsersService {
   create(email: string, passwordHash: string): Promise<User> {
     return this.repo.save({ email, passwordHash });
   }
+
+  async findOrCreate(email: string): Promise<User> {
+    const existing = await this.repo.findOneBy({ email });
+    if (existing) return existing;
+    return this.repo.save({ email, passwordHash: '' });
+  }
+
+  async checkAndIncrementScan(userId: number): Promise<{ allowed: boolean; remaining: number | null }> {
+    const user = await this.repo.findOneBy({ id: userId });
+    if (!user) return { allowed: false, remaining: 0 };
+
+    if (user.tier === 'expert') {
+      user.scansUsedThisMonth += 1;
+      await this.repo.save(user);
+      return { allowed: true, remaining: null };
+    }
+
+    const now = new Date();
+    const reset = user.scansResetAt ? new Date(user.scansResetAt) : null;
+    const needsReset = !reset ||
+      reset.getMonth() !== now.getMonth() ||
+      reset.getFullYear() !== now.getFullYear();
+
+    if (needsReset) {
+      user.scansUsedThisMonth = 0;
+      user.scansResetAt = now;
+    }
+
+    const PRO_CAP = 20;
+    if (user.scansUsedThisMonth >= PRO_CAP) {
+      if (needsReset) await this.repo.save(user);
+      return { allowed: false, remaining: 0 };
+    }
+
+    user.scansUsedThisMonth += 1;
+    await this.repo.save(user);
+    return { allowed: true, remaining: PRO_CAP - user.scansUsedThisMonth };
+  }
 }
