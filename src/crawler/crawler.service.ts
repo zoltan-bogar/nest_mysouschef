@@ -62,8 +62,7 @@ export class CrawlerService implements OnModuleInit, OnModuleDestroy {
           url: url,
           keywords: keywords,
           siteName: site_name,
-          description: description,
-          //times: [{type: "", hr: "", min: ""},{},{}],
+          description: description?.trim(),
           instructions: this.getRecipeDirections(html),
           source: this.getRecipeAuthor(html),
           servings: this.getRecipeServing(html),
@@ -349,7 +348,7 @@ export class CrawlerService implements OnModuleInit, OnModuleDestroy {
       return true;
     });
 
-    return author;
+    return author.trim();
   }
 
   private getRecipeServing(html): string {
@@ -369,7 +368,7 @@ export class CrawlerService implements OnModuleInit, OnModuleDestroy {
       return true;
     });
 
-    return serving;
+    return typeof serving === 'string' ? serving.trim() : serving;
   }
 
   private getRecipeTimes(html, ch): string {
