@@ -21,6 +21,9 @@ export class Recipe {
   url: string;
 
   @Column({ type: 'jsonb', nullable: true })
+  ingredients: { name: string; amount: string; unit: string }[];
+
+  @Column({ type: 'jsonb', nullable: true })
   data: object;
 
   @CreateDateColumn()
