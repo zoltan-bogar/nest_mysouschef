@@ -12,7 +12,7 @@ export class User {
   passwordHash: string;
 
   @Column({ default: 'free' })
-  tier: 'free' | 'pro' | 'expert';
+  tier: 'free' | 'pro' | 'expert' | 'admin';
 
   @Column({ default: 0 })
   scansUsedThisMonth: number;

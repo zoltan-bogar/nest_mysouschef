@@ -11,6 +11,17 @@ export class UsersService {
     return this.repo.findOneBy({ email });
   }
 
+  findAll(): Promise<User[]> {
+    return this.repo.find({ order: { createdAt: 'DESC' } });
+  }
+
+  async setTier(email: string, tier: User['tier']): Promise<User> {
+    const user = await this.repo.findOneBy({ email });
+    if (!user) throw new Error('User not found');
+    user.tier = tier;
+    return this.repo.save(user);
+  }
+
   create(email: string, passwordHash: string): Promise<User> {
     return this.repo.save({ email, passwordHash });
   }
