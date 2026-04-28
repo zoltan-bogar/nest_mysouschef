@@ -16,6 +16,7 @@ import { RecipeModel } from './recipes.interface';
 import { Recipe } from './recipe.entity';
 import { UsersService } from '../users/users.service';
 import { CrawlerService } from '../crawler/crawler.service';
+import { CookbooksService } from '../cookbooks/cookbooks.service';
 
 @Controller('recipes')
 export class RecipesController {
@@ -23,6 +24,7 @@ export class RecipesController {
     private readonly recipesService: RecipesService,
     private readonly usersService: UsersService,
     private readonly crawlerService: CrawlerService,
+    private readonly cookbooksService: CookbooksService,
   ) {}
 
   private async resolveUserId(email?: string): Promise<number | undefined> {
@@ -34,8 +36,9 @@ export class RecipesController {
   @Post()
   public async create(
     @Headers('x-user-email') email: string | undefined,
-    @Body() recipe: RecipeModel,
+    @Body() body: RecipeModel & { cookbookId?: number },
   ): Promise<Recipe> {
+    const { cookbookId, ...recipe } = body;
     const userId = await this.resolveUserId(email);
     if (userId) {
       const user = await this.usersService.findByEmail(email!);
@@ -46,7 +49,12 @@ export class RecipesController {
         }
       }
     }
-    return this.recipesService.create(recipe, userId);
+    const saved = await this.recipesService.create(recipe, userId);
+    if (userId) {
+      const targetId = cookbookId ?? await this.cookbooksService.getDefaultCookbookId(userId);
+      if (targetId) await this.cookbooksService.addRecipe(targetId, saved.id);
+    }
+    return saved;
   }
 
   @Get()

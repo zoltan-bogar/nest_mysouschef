@@ -5,9 +5,10 @@ import { RecipesController } from './recipes.controller';
 import { Recipe } from './recipe.entity';
 import { UsersModule } from '../users/users.module';
 import { CrawlerModule } from '../crawler/crawler.module';
+import { CookbooksModule } from '../cookbooks/cookbooks.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Recipe]), UsersModule, CrawlerModule],
+  imports: [TypeOrmModule.forFeature([Recipe]), UsersModule, CrawlerModule, CookbooksModule],
   providers: [RecipesService],
   controllers: [RecipesController],
   exports: [RecipesService],
