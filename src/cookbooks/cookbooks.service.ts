@@ -22,7 +22,20 @@ export class CookbooksService {
   async ensureDefaultCookbook(userId: number, name = 'Kezdő'): Promise<Cookbook> {
     const existing = await this.cookbookRepo.findOne({ where: { userId, isDefault: true } });
     if (existing) return existing;
-    return this.cookbookRepo.save({ name, userId, isDefault: true, recipes: [] });
+
+    // Find all user recipes not yet assigned to any cookbook
+    const allUserRecipes = await this.recipeRepo.find({ where: { userId } });
+    const assignedIds = await this.cookbookRepo
+      .createQueryBuilder('cb')
+      .innerJoin('cb.recipes', 'r')
+      .where('cb.userId = :userId', { userId })
+      .select('r.id', 'id')
+      .getRawMany()
+      .then(rows => new Set(rows.map((r: { id: number }) => r.id)));
+
+    const unassigned = allUserRecipes.filter(r => !assignedIds.has(r.id));
+
+    return this.cookbookRepo.save({ name, userId, isDefault: true, recipes: unassigned });
   }
 
   async create(name: string, userId: number): Promise<Cookbook> {
@@ -46,6 +59,13 @@ export class CookbooksService {
     if (!cookbook) return;
     cookbook.recipes = cookbook.recipes.filter(r => r.id !== recipeId);
     await this.cookbookRepo.save(cookbook);
+  }
+
+  async rename(id: number, userId: number, name: string): Promise<Cookbook | null> {
+    const cookbook = await this.cookbookRepo.findOneBy({ id, userId });
+    if (!cookbook) return null;
+    cookbook.name = name;
+    return this.cookbookRepo.save(cookbook);
   }
 
   async delete(id: number, userId: number): Promise<void> {

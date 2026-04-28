@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Headers, HttpCode, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, HttpCode, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 import { CookbooksService } from './cookbooks.service';
 import { UsersService } from '../users/users.service';
 
@@ -13,6 +13,7 @@ export class CookbooksController {
   async findAll(@Headers('x-user-email') email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) return [];
+    await this.cookbooksService.ensureDefaultCookbook(user.id);
     return this.cookbooksService.findAllByUser(user.id);
   }
 
@@ -24,6 +25,17 @@ export class CookbooksController {
     const user = await this.usersService.findByEmail(email);
     if (!user) return;
     return this.cookbooksService.create(body.name, user.id);
+  }
+
+  @Patch(':id')
+  async rename(
+    @Headers('x-user-email') email: string,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { name: string },
+  ) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) return;
+    return this.cookbooksService.rename(id, user.id, body.name);
   }
 
   @Delete(':id')
