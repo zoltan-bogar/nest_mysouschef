@@ -1,6 +1,7 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import Anthropic from '@anthropic-ai/sdk';
 
 //import $ from 'cheerio';
 import cheerio from 'cheerio';
@@ -11,8 +12,11 @@ const CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 export class CrawlerService implements OnModuleInit, OnModuleDestroy {
   private redis: Redis;
   private recipeData: Object = {};
+  private readonly anthropic: Anthropic;
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(private readonly config: ConfigService) {
+    this.anthropic = new Anthropic({ apiKey: config.get<string>('ANTHROPIC_API_KEY') });
+  }
 
   onModuleInit() {
     const url = this.config.get<string>('REDIS_URL');
@@ -82,6 +86,34 @@ export class CrawlerService implements OnModuleInit, OnModuleDestroy {
     }
 
     return this.recipeData;
+  }
+
+  public async translate(recipe: Record<string, any>): Promise<Record<string, any>> {
+    const response = await this.anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4096,
+      system: 'You are a recipe translator. Translate only the text values in the provided JSON to Hungarian. Keep all JSON keys, numbers, and units unchanged. Return ONLY the raw JSON — no markdown, no explanation.',
+      messages: [{
+        role: 'user',
+        content: JSON.stringify({
+          title: recipe.title,
+          description: recipe.description,
+          ingredients: recipe.ingredients,
+          instructions: recipe.instructions,
+        }),
+      }],
+    });
+
+    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    let translated: Record<string, any>;
+    try {
+      translated = JSON.parse(text);
+    } catch {
+      const block = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+      translated = JSON.parse(block ? block[1].trim() : text.match(/\{[\s\S]*\}/)?.[0] ?? '{}');
+    }
+
+    return { ...recipe, ...translated };
   }
 
   private extractJsonLdRecipe(ch: ReturnType<typeof cheerio.load>): {

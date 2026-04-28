@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   Get,
   Headers,
+  HttpCode,
   Param,
   ParseIntPipe,
   Post,
@@ -14,12 +15,14 @@ import { RecipesService } from './recipes.service';
 import { RecipeModel } from './recipes.interface';
 import { Recipe } from './recipe.entity';
 import { UsersService } from '../users/users.service';
+import { CrawlerService } from '../crawler/crawler.service';
 
 @Controller('recipes')
 export class RecipesController {
   constructor(
     private readonly recipesService: RecipesService,
     private readonly usersService: UsersService,
+    private readonly crawlerService: CrawlerService,
   ) {}
 
   private async resolveUserId(email?: string): Promise<number | undefined> {
@@ -57,6 +60,34 @@ export class RecipesController {
   @Get(':id')
   public findOne(@Param('id', ParseIntPipe) id: number): Promise<Recipe> {
     return this.recipesService.findOne(id);
+  }
+
+  @Post(':id/translate')
+  @HttpCode(200)
+  public async translate(
+    @Headers('x-user-email') email: string | undefined,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Recipe> {
+    const user = email ? await this.usersService.findByEmail(email) : null;
+    if (!user || (user.tier !== 'expert' && user.tier !== 'admin')) {
+      throw new ForbiddenException({ message: 'Translation requires an Expert subscription.', code: 'EXPERT_REQUIRED' });
+    }
+
+    const recipe = await this.recipesService.findOne(id);
+    const payload = {
+      title: recipe.title,
+      ...(recipe.data as Record<string, any>),
+      ingredients: recipe.ingredients,
+    };
+
+    const translated = await this.crawlerService.translate(payload);
+
+    return this.recipesService.update(id, {
+      ...recipe,
+      title: translated.title ?? recipe.title,
+      ingredients: translated.ingredients ?? recipe.ingredients,
+      data: { ...(recipe.data as Record<string, any>), ...translated },
+    });
   }
 
   @Delete(':id')
