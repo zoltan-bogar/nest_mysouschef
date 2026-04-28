@@ -36,7 +36,6 @@ export class CrawlerService implements OnModuleInit, OnModuleDestroy {
     await fetch(url)
       .then((result) => result.text())
       .then((html) => {
-        //console.log(html);
         const ch = cheerio.load(html);
         const title =
           ch('meta[property="og:title"]').attr('content') ||
@@ -57,6 +56,8 @@ export class CrawlerService implements OnModuleInit, OnModuleDestroy {
           ch('meta[property="og:keywords"]').attr('content') ||
           ch('meta[name="keywords"]').attr('content');
 
+        const ldRecipe = this.extractJsonLdRecipe(ch);
+
         this.recipeData = {
           ...this.recipeData,
           title: this.getRecipeTitle(html),
@@ -66,10 +67,10 @@ export class CrawlerService implements OnModuleInit, OnModuleDestroy {
           keywords: keywords,
           siteName: site_name,
           description: description?.trim(),
-          instructions: this.getRecipeDirections(html),
-          source: this.getRecipeAuthor(html),
-          servings: this.getRecipeServing(html),
-          ingredients: this.getRecipeIngredients(html),
+          instructions: ldRecipe?.instructions ?? this.getRecipeDirections(html),
+          source: ldRecipe?.author ?? this.getRecipeAuthor(html),
+          servings: ldRecipe?.servings ?? this.getRecipeServing(html),
+          ingredients: ldRecipe?.ingredients ?? this.getRecipeIngredients(html),
         };
       })
       .catch((error) => {
@@ -81,6 +82,83 @@ export class CrawlerService implements OnModuleInit, OnModuleDestroy {
     }
 
     return this.recipeData;
+  }
+
+  private extractJsonLdRecipe(ch: ReturnType<typeof cheerio.load>): {
+    ingredients: {}[];
+    instructions: string[];
+    author: string;
+    servings: string;
+  } | null {
+    let recipe: any = null;
+
+    ch('script[type="application/ld+json"]').each((_, el) => {
+      if (recipe) return;
+      try {
+        const data = JSON.parse(ch(el).html() || '');
+        const candidates: any[] = Array.isArray(data)
+          ? data
+          : data['@graph']
+            ? data['@graph']
+            : [data];
+        recipe = candidates.find((n: any) => n['@type'] === 'Recipe') ?? null;
+      } catch {
+        // ignore malformed blocks
+      }
+    });
+
+    if (!recipe) return null;
+
+    // ingredients
+    const rawIngredients: string[] = Array.isArray(recipe.recipeIngredient)
+      ? recipe.recipeIngredient
+      : [];
+    const ingredients = rawIngredients.map((item) => {
+      const units = ['g','kg','ek','teáskanál','l','ml','cl','dl','dkg','tbsp','tsp','csipet','db','pcs','oz','floz','mk','fej','gerezd','csokor'];
+      const parts = item.trim().split(/\s+/);
+      let amount = '';
+      let unit = '';
+      const nameWords: string[] = [];
+      let amountFound = false;
+      let unitFound = false;
+
+      for (const part of parts) {
+        if (!amountFound && /^\d+([.,]\d+)?(-\d+)?$/.test(part)) {
+          amount = part;
+          amountFound = true;
+        } else if (!unitFound && units.includes(part.toLowerCase())) {
+          unit = part;
+          unitFound = true;
+        } else {
+          nameWords.push(part);
+        }
+      }
+
+      return { amount, unit, name: nameWords.join(' ') };
+    });
+
+    // instructions
+    const rawInstructions = Array.isArray(recipe.recipeInstructions)
+      ? recipe.recipeInstructions
+      : [];
+    const instructions = rawInstructions
+      .map((step: any) =>
+        typeof step === 'string' ? step : step.text ?? step.name ?? '',
+      )
+      .filter((s: string) => s.trim() !== '');
+
+    // author
+    const author =
+      typeof recipe.author === 'string'
+        ? recipe.author
+        : recipe.author?.name ?? '';
+
+    // servings
+    const servings = recipe.recipeYield
+      ? String(recipe.recipeYield)
+      : '';
+
+    return { ingredients, instructions, author, servings };
   }
 
   private getRecipeTitle(html): string {
