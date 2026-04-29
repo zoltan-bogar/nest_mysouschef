@@ -6,9 +6,10 @@ import { Recipe } from './recipe.entity';
 import { UsersModule } from '../users/users.module';
 import { CrawlerModule } from '../crawler/crawler.module';
 import { CookbooksModule } from '../cookbooks/cookbooks.module';
+import { PublicRecipesModule } from '../public-recipes/public-recipes.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Recipe]), UsersModule, CrawlerModule, CookbooksModule],
+  imports: [TypeOrmModule.forFeature([Recipe]), UsersModule, CrawlerModule, CookbooksModule, PublicRecipesModule],
   providers: [RecipesService],
   controllers: [RecipesController],
   exports: [RecipesService],

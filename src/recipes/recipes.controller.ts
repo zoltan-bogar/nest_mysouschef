@@ -4,6 +4,7 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  NotFoundException,
   Headers,
   HttpCode,
   Param,
@@ -17,6 +18,7 @@ import { Recipe } from './recipe.entity';
 import { UsersService } from '../users/users.service';
 import { CrawlerService } from '../crawler/crawler.service';
 import { CookbooksService } from '../cookbooks/cookbooks.service';
+import { PublicRecipesService } from '../public-recipes/public-recipes.service';
 
 @Controller('recipes')
 export class RecipesController {
@@ -25,6 +27,7 @@ export class RecipesController {
     private readonly usersService: UsersService,
     private readonly crawlerService: CrawlerService,
     private readonly cookbooksService: CookbooksService,
+    private readonly publicRecipesService: PublicRecipesService,
   ) {}
 
   private async resolveUserId(email?: string): Promise<number | undefined> {
@@ -79,6 +82,27 @@ export class RecipesController {
     const userId = await this.resolveUserId(email);
     if (!userId) throw new ForbiddenException('Must be signed in to save.');
     return this.recipesService.saveShared(token, userId);
+  }
+
+  @Post('from-library/:publicId')
+  @HttpCode(200)
+  public async addFromLibrary(
+    @Headers('x-user-email') email: string | undefined,
+    @Param('publicId', ParseIntPipe) publicId: number,
+  ): Promise<Recipe> {
+    const userId = await this.resolveUserId(email);
+    if (!userId) throw new ForbiddenException('Must be signed in to save.');
+    const publicRecipe = await this.publicRecipesService.findById(publicId);
+    if (!publicRecipe) throw new NotFoundException('Public recipe not found.');
+    const user = await this.usersService.findByEmail(email!);
+    if (user?.tier === 'free') {
+      const count = await this.recipesService.countByUser(userId);
+      if (count >= 5) throw new ForbiddenException({ message: 'Recipe limit reached.', code: 'RECIPE_LIMIT_REACHED' });
+    }
+    const saved = await this.recipesService.createFromLibrary(publicRecipe, userId);
+    const cookbookId = await this.cookbooksService.getDefaultCookbookId(userId);
+    if (cookbookId) await this.cookbooksService.addRecipe(cookbookId, saved.id);
+    return saved;
   }
 
   @Get(':id')
