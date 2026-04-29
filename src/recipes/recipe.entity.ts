@@ -34,6 +34,9 @@ export class Recipe {
   @Column({ nullable: true })
   shareToken: string | null;
 
+  @Column({ nullable: true })
+  sourcePublicRecipeId: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

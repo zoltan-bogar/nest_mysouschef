@@ -84,6 +84,17 @@ export class RecipesController {
     return this.recipesService.saveShared(token, userId);
   }
 
+  @Get('from-library/:publicId/check')
+  public async checkFromLibrary(
+    @Headers('x-user-email') email: string | undefined,
+    @Param('publicId', ParseIntPipe) publicId: number,
+  ): Promise<{ saved: boolean; recipeId?: number }> {
+    const userId = await this.resolveUserId(email);
+    if (!userId) return { saved: false };
+    const existing = await this.recipesService.findByPublicRecipeId(publicId, userId);
+    return existing ? { saved: true, recipeId: existing.id } : { saved: false };
+  }
+
   @Post('from-library/:publicId')
   @HttpCode(200)
   public async addFromLibrary(

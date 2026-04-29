@@ -72,16 +72,21 @@ export class RecipesService {
     return this.recipeRepository.save({ ...rest, userId, shareToken: null });
   }
 
-  async createFromLibrary(publicRecipe: { title: string; category?: string | null; url?: string | null; ingredients?: object | null; data?: object | null }, userId: number): Promise<Recipe> {
+  async createFromLibrary(publicRecipe: { id: number; title: string; category?: string | null; url?: string | null; ingredients?: object | null; data?: object | null }, userId: number): Promise<Recipe> {
     return this.recipeRepository.save({
       title: publicRecipe.title,
       category: publicRecipe.category ?? null,
       url: publicRecipe.url ?? null,
-      ingredients: publicRecipe.ingredients ?? null,
+      ingredients: (publicRecipe.ingredients ?? null) as Recipe['ingredients'],
       data: publicRecipe.data ?? null,
       userId,
       shareToken: null,
+      sourcePublicRecipeId: publicRecipe.id,
     });
+  }
+
+  findByPublicRecipeId(publicRecipeId: number, userId: number): Promise<Recipe | null> {
+    return this.recipeRepository.findOneBy({ sourcePublicRecipeId: publicRecipeId, userId });
   }
 
   async update(id: number, recipe: RecipeModel): Promise<Recipe> {
