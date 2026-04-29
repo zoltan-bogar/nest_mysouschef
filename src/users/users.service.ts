@@ -22,8 +22,12 @@ export class UsersService {
     return this.repo.save(user);
   }
 
-  create(email: string, passwordHash: string): Promise<User> {
-    return this.repo.save({ email, passwordHash });
+  create(email: string, passwordHash: string, referredByUserId?: number | null): Promise<User> {
+    return this.repo.save({ email, passwordHash, referredByUserId: referredByUserId ?? null });
+  }
+
+  getReferralCount(userId: number): Promise<number> {
+    return this.repo.count({ where: { referredByUserId: userId } });
   }
 
   async findOrCreate(email: string): Promise<User> {

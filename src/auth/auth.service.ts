@@ -10,11 +10,11 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(email: string, password: string) {
+  async register(email: string, password: string, referredByUserId?: number | null) {
     const existing = await this.usersService.findByEmail(email);
     if (existing) throw new ConflictException('Email already registered');
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await this.usersService.create(email, passwordHash);
+    const user = await this.usersService.create(email, passwordHash, referredByUserId);
     return { access_token: this.jwtService.sign({ sub: user.id, email: user.email }) };
   }
 

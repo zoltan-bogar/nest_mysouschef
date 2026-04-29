@@ -2,6 +2,7 @@ import { Body, Controller, Get, Headers, NotFoundException, Post } from '@nestjs
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { CookbooksService } from '../cookbooks/cookbooks.service';
+import { RecipesService } from '../recipes/recipes.service';
 
 @Controller('auth')
 export class AuthController {
@@ -9,11 +10,19 @@ export class AuthController {
     private readonly service: AuthService,
     private readonly usersService: UsersService,
     private readonly cookbooksService: CookbooksService,
+    private readonly recipesService: RecipesService,
   ) {}
 
   @Post('register')
-  register(@Body() body: { email: string; password: string }) {
-    return this.service.register(body.email, body.password);
+  async register(@Body() body: { email: string; password: string; viaToken?: string }) {
+    let referredByUserId: number | undefined;
+    if (body.viaToken) {
+      try {
+        const recipe = await this.recipesService.findByShareToken(body.viaToken);
+        if (recipe.userId) referredByUserId = recipe.userId;
+      } catch { /* invalid or expired token — no referral recorded */ }
+    }
+    return this.service.register(body.email, body.password, referredByUserId);
   }
 
   @Post('login')

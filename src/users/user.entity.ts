@@ -20,6 +20,9 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   scansResetAt: Date | null;
 
+  @Column({ nullable: true })
+  referredByUserId: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }
