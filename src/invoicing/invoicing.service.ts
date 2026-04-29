@@ -38,14 +38,12 @@ export class InvoicingService {
       : amountEur;
     const afaErtek = Math.round((amountEur - nettoEgysegAr) * 100) / 100;
 
-    const apiKey = this.apiKey;
-    this.logger.log(`Számlázz.hu API key prefix: ${apiKey.substring(0, 8)}... (len ${apiKey.length})`);
     return `<?xml version="1.0" encoding="UTF-8"?>
-<szl:xmlszamlaxml xmlns:szl="http://www.szamlazz.hu/xmlszamlaxml"
-                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xsi:schemaLocation="http://www.szamlazz.hu/xmlszamlaxml https://www.szamlazz.hu/szamla/docs/xsd/agent/xmlszamlaxml.xsd">
+<xmlszamla xmlns="http://www.szamlazz.hu/xmlszamla"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.szamlazz.hu/xmlszamla https://www.szamlazz.hu/szamla/docs/xsds/agent/xmlszamla.xsd">
   <beallitasok>
-    <szamlaagentkulcs>${apiKey}</szamlaagentkulcs>
+    <szamlaagentkulcs>${this.apiKey}</szamlaagentkulcs>
     <eszamla>true</eszamla>
     <valaszVerzio>2</valaszVerzio>
   </beallitasok>
@@ -84,7 +82,7 @@ export class InvoicingService {
       <bruttoErtek>${amountEur}</bruttoErtek>
     </tetel>
   </tetelek>
-</szl:xmlszamlaxml>`;
+</xmlszamla>`;
   }
 
   async createInvoice(params: {
@@ -99,7 +97,7 @@ export class InvoicingService {
 
     const form = new FormData();
     form.append(
-      'action-szamla_agent_xml',
+      'action-xmlagentxmlfile',
       new Blob([xml], { type: 'application/xml' }),
       'invoice.xml',
     );
