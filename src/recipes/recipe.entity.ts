@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('recipes')
@@ -28,6 +29,10 @@ export class Recipe {
 
   @Column({ nullable: true })
   userId: number | null;
+
+  @Index({ unique: true, sparse: true })
+  @Column({ nullable: true })
+  shareToken: string | null;
 
   @CreateDateColumn()
   createdAt: Date;

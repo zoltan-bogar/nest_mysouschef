@@ -4,6 +4,7 @@ import {
   NotFoundException,
   Logger,
 } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Recipe } from './recipe.entity';
@@ -50,6 +51,25 @@ export class RecipesService {
   async delete(id: number): Promise<void> {
     const result = await this.recipeRepository.delete(id);
     if (result.affected === 0) throw new NotFoundException('Recipe not found.');
+  }
+
+  async findByShareToken(token: string): Promise<Recipe> {
+    const recipe = await this.recipeRepository.findOneBy({ shareToken: token });
+    if (!recipe) throw new NotFoundException('Recipe not found.');
+    return recipe;
+  }
+
+  async generateShareToken(id: number): Promise<Recipe> {
+    const recipe = await this.findOne(id);
+    if (recipe.shareToken) return recipe;
+    const token = randomBytes(16).toString('hex');
+    await this.recipeRepository.update(id, { shareToken: token });
+    return this.findOne(id);
+  }
+
+  async saveShared(token: string, userId: number): Promise<Recipe> {
+    const { id, shareToken, createdAt, updatedAt, userId: _uid, ...rest } = await this.findByShareToken(token);
+    return this.recipeRepository.save({ ...rest, userId, shareToken: null });
   }
 
   async update(id: number, recipe: RecipeModel): Promise<Recipe> {

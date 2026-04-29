@@ -65,9 +65,32 @@ export class RecipesController {
     return this.recipesService.findAll(userId);
   }
 
+  @Get('shared/:token')
+  public getShared(@Param('token') token: string): Promise<Recipe> {
+    return this.recipesService.findByShareToken(token);
+  }
+
+  @Post('shared/:token/save')
+  @HttpCode(200)
+  public async saveShared(
+    @Headers('x-user-email') email: string | undefined,
+    @Param('token') token: string,
+  ): Promise<Recipe> {
+    const userId = await this.resolveUserId(email);
+    if (!userId) throw new ForbiddenException('Must be signed in to save.');
+    return this.recipesService.saveShared(token, userId);
+  }
+
   @Get(':id')
   public findOne(@Param('id', ParseIntPipe) id: number): Promise<Recipe> {
     return this.recipesService.findOne(id);
+  }
+
+  @Post(':id/share')
+  @HttpCode(200)
+  public async share(@Param('id', ParseIntPipe) id: number): Promise<{ token: string }> {
+    const recipe = await this.recipesService.generateShareToken(id);
+    return { token: recipe.shareToken! };
   }
 
   @Post(':id/translate')
