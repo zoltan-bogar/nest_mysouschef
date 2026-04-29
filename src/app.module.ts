@@ -13,6 +13,8 @@ import { CookbooksModule } from './cookbooks/cookbooks.module';
 import { NutritionModule } from './nutrition/nutrition.module';
 import { PublicRecipesModule } from './public-recipes/public-recipes.module';
 import { BillingModule } from './billing/billing.module';
+import { MealPlanTemplatesModule } from './meal-plan-templates/meal-plan-templates.module';
+import { MealPlanTemplate } from './meal-plan-templates/meal-plan-template.entity';
 import { Recipe } from './recipes/recipe.entity';
 import { MealPlan } from './meal-plans/meal-plan.entity';
 import { User } from './users/user.entity';
@@ -34,7 +36,7 @@ import { PublicRecipe } from './public-recipes/public-recipe.entity';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         ssl: config.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
-        entities: [Recipe, MealPlan, User, Cookbook, IngredientNutrition, PublicRecipe],
+        entities: [Recipe, MealPlan, User, Cookbook, IngredientNutrition, PublicRecipe, MealPlanTemplate],
         synchronize: config.get<string>('DB_SYNCHRONIZE') !== 'false',
       }),
     }),
@@ -48,6 +50,7 @@ import { PublicRecipe } from './public-recipes/public-recipe.entity';
     NutritionModule,
     PublicRecipesModule,
     BillingModule,
+    MealPlanTemplatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
