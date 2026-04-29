@@ -19,13 +19,18 @@ function tierForProductId(productId: string): User['tier'] | null {
 
 @Injectable()
 export class BillingService {
-  private readonly stripe: StripeInstance;
+  private _stripe: StripeInstance | null = null;
   private readonly logger = new Logger(BillingService.name);
 
-  constructor(private readonly usersService: UsersService) {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
-      apiVersion: '2026-04-22.dahlia',
-    });
+  constructor(private readonly usersService: UsersService) {}
+
+  private get stripe(): StripeInstance {
+    if (!this._stripe) {
+      const key = process.env.STRIPE_SECRET_KEY;
+      if (!key) throw new Error('STRIPE_SECRET_KEY is not configured');
+      this._stripe = new Stripe(key, { apiVersion: '2026-04-22.dahlia' });
+    }
+    return this._stripe;
   }
 
   async createCheckoutSession(user: User, tier: 'pro' | 'expert', successUrl: string, cancelUrl: string): Promise<string> {
