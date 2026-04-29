@@ -12,8 +12,8 @@ export class InvoicingService {
     return key;
   }
 
-  private escapeXml(str: string): string {
-    return str
+  private escapeXml(str: string | null | undefined): string {
+    return (str ?? '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
