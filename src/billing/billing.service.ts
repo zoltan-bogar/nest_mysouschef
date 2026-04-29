@@ -74,6 +74,12 @@ export class BillingService {
   }
 
   async handleWebhookEvent(event: StripeEvent): Promise<void> {
+    // Uncomment when switching to live Stripe keys:
+    // const usingLiveKey = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_');
+    // if (usingLiveKey && !(event as any).livemode) {
+    //   this.logger.warn(`Ignoring test-mode webhook while using live key: ${event.type}`);
+    //   return;
+    // }
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as { mode: string; metadata: Record<string, string> | null; customer: string; subscription: string };
