@@ -39,9 +39,9 @@ export class InvoicingService {
     const afaErtek = Math.round((amountEur - nettoEgysegAr) * 100) / 100;
 
     return `<?xml version="1.0" encoding="UTF-8"?>
-<xmlszamla xmlns="http://www.szamlazz.hu/xmlszamla"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://www.szamlazz.hu/xmlszamla https://www.szamlazz.hu/szamla/docs/xsd/agent/xmlszamla.xsd">
+<xmlszamlaxml xmlns="http://www.szamlazz.hu/xmlszamlaxml"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://www.szamlazz.hu/xmlszamlaxml https://www.szamlazz.hu/szamla/docs/xsd/agent/xmlszamlaxml.xsd">
   <beallitasok>
     <szamlaagentkulcs>${this.apiKey}</szamlaagentkulcs>
     <eszamla>true</eszamla>
@@ -82,7 +82,7 @@ export class InvoicingService {
       <bruttoErtek>${amountEur}</bruttoErtek>
     </tetel>
   </tetelek>
-</xmlszamla>`;
+</xmlszamlaxml>`;
   }
 
   async createInvoice(params: {
