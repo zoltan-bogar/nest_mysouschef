@@ -129,7 +129,8 @@ export class BillingService {
           lines: { data: { description: string | null }[] };
           billing_reason: string;
         };
-        this.logger.log(`invoice.payment_succeeded: currency=${inv.currency} amount=${inv.amount_paid} email=${inv.customer_email}`);
+        const rawInv = event.data.object as Record<string, unknown>;
+        this.logger.log(`invoice.payment_succeeded raw: ${JSON.stringify({ currency: rawInv.currency, amount_paid: rawInv.amount_paid, total: rawInv.total, amount_due: rawInv.amount_due, subtotal: rawInv.subtotal, status: rawInv.status, email: rawInv.customer_email })}`);
         if (inv.amount_paid === 0) { this.logger.log('Skipping: amount_paid is 0'); break; }
         // Only issue HUF invoices for now; EUR requires a paid Számlázz.hu plan
         if (inv.currency !== 'huf') { this.logger.log(`Skipping: currency is ${inv.currency}, not huf`); break; }
