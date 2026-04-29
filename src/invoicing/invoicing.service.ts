@@ -53,7 +53,7 @@ export class InvoicingService {
            xsi:schemaLocation="http://www.szamlazz.hu/xmlszamla https://www.szamlazz.hu/szamla/docs/xsds/agent/xmlszamla.xsd">
   <beallitasok>
     <szamlaagentkulcs>${this.apiKey}</szamlaagentkulcs>
-    <eszamla>true</eszamla>
+    <eszamla>false</eszamla>
     <valaszVerzio>2</valaszVerzio>
   </beallitasok>
   <fejlec>
