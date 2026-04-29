@@ -48,9 +48,11 @@ export class RecipesService {
     return this.recipeRepository.save({ ...recipe, userId: userId ?? null });
   }
 
-  async delete(id: number): Promise<void> {
-    const result = await this.recipeRepository.delete(id);
-    if (result.affected === 0) throw new NotFoundException('Recipe not found.');
+  async delete(id: number, userId?: number): Promise<void> {
+    const recipe = await this.recipeRepository.findOneBy({ id });
+    if (!recipe) throw new NotFoundException('Recipe not found.');
+    if (userId !== undefined && recipe.userId !== userId) throw new NotFoundException('Recipe not found.');
+    await this.recipeRepository.delete(id);
   }
 
   async findByShareToken(token: string): Promise<Recipe> {

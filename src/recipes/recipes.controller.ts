@@ -157,8 +157,13 @@ export class RecipesController {
   }
 
   @Delete(':id')
-  public delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return this.recipesService.delete(id);
+  @HttpCode(200)
+  public async delete(
+    @Headers('x-user-email') email: string | undefined,
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<void> {
+    const userId = await this.resolveUserId(email);
+    return this.recipesService.delete(id, userId);
   }
 
   @Put(':id')
