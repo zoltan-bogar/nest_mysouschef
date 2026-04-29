@@ -23,6 +23,12 @@ export class User {
   @Column({ nullable: true })
   referredByUserId: number | null;
 
+  @Column({ nullable: true })
+  stripeCustomerId: string | null;
+
+  @Column({ nullable: true })
+  stripeSubscriptionId: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

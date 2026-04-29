@@ -22,6 +22,14 @@ export class UsersService {
     return this.repo.save(user);
   }
 
+  findByStripeCustomerId(customerId: string): Promise<User | null> {
+    return this.repo.findOneBy({ stripeCustomerId: customerId });
+  }
+
+  async updateStripe(userId: number, patch: { stripeCustomerId?: string; stripeSubscriptionId?: string | null; tier?: User['tier'] }): Promise<void> {
+    await this.repo.update(userId, patch);
+  }
+
   create(email: string, passwordHash: string, referredByUserId?: number | null): Promise<User> {
     return this.repo.save({ email, passwordHash, referredByUserId: referredByUserId ?? null });
   }

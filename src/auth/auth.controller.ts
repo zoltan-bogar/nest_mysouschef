@@ -34,7 +34,7 @@ export class AuthController {
   async me(@Headers('x-user-email') email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) throw new NotFoundException();
-    return { email: user.email, tier: user.tier, scansUsedThisMonth: user.scansUsedThisMonth };
+    return { email: user.email, tier: user.tier, scansUsedThisMonth: user.scansUsedThisMonth, hasSubscription: !!user.stripeSubscriptionId };
   }
 
   @Post('sync')

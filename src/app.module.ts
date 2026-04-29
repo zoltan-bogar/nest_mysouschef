@@ -12,6 +12,7 @@ import { ScanModule } from './scan/scan.module';
 import { CookbooksModule } from './cookbooks/cookbooks.module';
 import { NutritionModule } from './nutrition/nutrition.module';
 import { PublicRecipesModule } from './public-recipes/public-recipes.module';
+import { BillingModule } from './billing/billing.module';
 import { Recipe } from './recipes/recipe.entity';
 import { MealPlan } from './meal-plans/meal-plan.entity';
 import { User } from './users/user.entity';
@@ -46,6 +47,7 @@ import { PublicRecipe } from './public-recipes/public-recipe.entity';
     CookbooksModule,
     NutritionModule,
     PublicRecipesModule,
+    BillingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
