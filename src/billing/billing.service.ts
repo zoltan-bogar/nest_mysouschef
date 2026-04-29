@@ -7,9 +7,15 @@ import { InvoicingService } from '../invoicing/invoicing.service';
 type StripeInstance = InstanceType<typeof Stripe>;
 type StripeEvent = ReturnType<StripeInstance['webhooks']['constructEvent']>;
 
-const PRICE_IDS: Record<string, string> = {
-  pro: process.env.STRIPE_PRO_PRICE_ID ?? '',
-  expert: process.env.STRIPE_EXPERT_PRICE_ID ?? '',
+const PRICE_IDS: Record<string, Record<'EUR' | 'HUF', string>> = {
+  pro: {
+    EUR: process.env.STRIPE_PRO_PRICE_ID ?? '',
+    HUF: process.env.STRIPE_PRO_HUF_PRICE_ID ?? '',
+  },
+  expert: {
+    EUR: process.env.STRIPE_EXPERT_PRICE_ID ?? '',
+    HUF: process.env.STRIPE_EXPERT_HUF_PRICE_ID ?? '',
+  },
 };
 
 function tierForProductId(productId: string): User['tier'] | null {
@@ -37,9 +43,9 @@ export class BillingService {
     return this._stripe;
   }
 
-  async createCheckoutSession(user: User, tier: 'pro' | 'expert', successUrl: string, cancelUrl: string): Promise<string> {
-    const priceId = PRICE_IDS[tier];
-    if (!priceId) throw new Error(`No price configured for tier: ${tier}`);
+  async createCheckoutSession(user: User, tier: 'pro' | 'expert', currency: 'EUR' | 'HUF', successUrl: string, cancelUrl: string): Promise<string> {
+    const priceId = PRICE_IDS[tier]?.[currency];
+    if (!priceId) throw new Error(`No price configured for tier: ${tier} / ${currency}`);
 
     let customerId = user.stripeCustomerId ?? undefined;
     if (!customerId) {
@@ -123,16 +129,19 @@ export class BillingService {
           lines: { data: { description: string | null }[] };
           billing_reason: string;
         };
-        // skip $0 invoices (trials, free plan adjustments)
         if (inv.amount_paid === 0) break;
+        // Only issue HUF invoices for now; EUR requires a paid Számlázz.hu plan
+        if (inv.currency !== 'huf') break;
         try {
           const countryCode = inv.customer_address?.country ?? 'HU';
-          const amountEur = inv.amount_paid / 100;
+          // HUF is a zero-decimal currency in Stripe — no /100
+          const amount = inv.amount_paid;
           const description = inv.lines.data[0]?.description ?? 'MySousChef előfizetés';
           await this.invoicingService.createInvoice({
             customerEmail: inv.customer_email,
             customerName: inv.customer_name ?? inv.customer_email,
-            amountEur,
+            amount,
+            currency: 'HUF',
             description,
             countryCode,
           });

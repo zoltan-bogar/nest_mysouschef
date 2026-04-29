@@ -24,19 +24,23 @@ export class InvoicingService {
   private buildXml(params: {
     customerEmail: string;
     customerName: string;
-    amountEur: number;
+    amount: number;
+    currency: 'EUR' | 'HUF';
     description: string;
     countryCode: string;
     today: string;
   }): string {
-    const { customerEmail, customerName, amountEur, description, countryCode, today } = params;
+    const { customerEmail, customerName, amount, currency, description, countryCode, today } = params;
 
-    // HU: 27% ÁFA. EU non-HU B2C: EU rate placeholder — confirm with accountant for OSS.
+    // HU domestic or HUF invoice: 27% ÁFA. Non-HU EU B2C: OSS rate.
     const vatKey = countryCode === 'HU' ? '27' : 'EU';
     const nettoEgysegAr = countryCode === 'HU'
-      ? Math.round((amountEur / 1.27) * 100) / 100
-      : amountEur;
-    const afaErtek = Math.round((amountEur - nettoEgysegAr) * 100) / 100;
+      ? Math.round((amount / 1.27) * 100) / 100
+      : amount;
+    const afaErtek = Math.round((amount - nettoEgysegAr) * 100) / 100;
+
+    const exchangeRateXml = currency === 'HUF' ? '' :
+      `    <arfolyamBank>MNB</arfolyamBank>\n    <arfolyam>0</arfolyam>\n`;
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <xmlszamla xmlns="http://www.szamlazz.hu/xmlszamla"
@@ -52,11 +56,9 @@ export class InvoicingService {
     <teljesitesDatum>${today}</teljesitesDatum>
     <fizetesiHataridoDatum>${today}</fizetesiHataridoDatum>
     <fizmod>Online bankkártya</fizmod>
-    <penznem>EUR</penznem>
+    <penznem>${currency}</penznem>
     <szamlaNyelve>hu</szamlaNyelve>
-    <arfolyamBank>MNB</arfolyamBank>
-    <arfolyam>0</arfolyam>
-  </fejlec>
+${exchangeRateXml}  </fejlec>
   <elado>
     <emailReplyto>hello@mysouschef.com</emailReplyto>
     <emailTargy>Számla – MySousChef</emailTargy>
@@ -79,7 +81,7 @@ export class InvoicingService {
       <afakulcs>${vatKey}</afakulcs>
       <nettoErtek>${nettoEgysegAr}</nettoErtek>
       <afaErtek>${afaErtek}</afaErtek>
-      <bruttoErtek>${amountEur}</bruttoErtek>
+      <bruttoErtek>${amount}</bruttoErtek>
     </tetel>
   </tetelek>
 </xmlszamla>`;
@@ -88,7 +90,8 @@ export class InvoicingService {
   async createInvoice(params: {
     customerEmail: string;
     customerName: string;
-    amountEur: number;
+    amount: number;
+    currency: 'EUR' | 'HUF';
     description: string;
     countryCode: string;
   }): Promise<void> {
