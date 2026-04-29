@@ -34,10 +34,15 @@ export class InvoicingService {
 
     // HU domestic or HUF invoice: 27% ÁFA. Non-HU EU B2C: OSS rate.
     const vatKey = countryCode === 'HU' ? '27' : 'EU';
-    const nettoEgysegAr = countryCode === 'HU'
-      ? Math.round((amount / 1.27) * 100) / 100
-      : amount;
-    const afaErtek = Math.round((amount - nettoEgysegAr) * 100) / 100;
+    // HUF is a zero-decimal currency — round to whole forints
+    const nettoEgysegAr = currency === 'HUF'
+      ? Math.round(amount / 1.27)
+      : countryCode === 'HU'
+        ? Math.round((amount / 1.27) * 100) / 100
+        : amount;
+    const afaErtek = currency === 'HUF'
+      ? amount - nettoEgysegAr
+      : Math.round((amount - nettoEgysegAr) * 100) / 100;
 
     const exchangeRateXml = currency === 'HUF' ? '' :
       `    <arfolyamBank>MNB</arfolyamBank>\n    <arfolyam>0</arfolyam>\n`;
