@@ -11,11 +11,13 @@ import { AuthModule } from './auth/auth.module';
 import { ScanModule } from './scan/scan.module';
 import { CookbooksModule } from './cookbooks/cookbooks.module';
 import { NutritionModule } from './nutrition/nutrition.module';
+import { PublicRecipesModule } from './public-recipes/public-recipes.module';
 import { Recipe } from './recipes/recipe.entity';
 import { MealPlan } from './meal-plans/meal-plan.entity';
 import { User } from './users/user.entity';
 import { Cookbook } from './cookbooks/cookbook.entity';
 import { IngredientNutrition } from './nutrition/ingredient-nutrition.entity';
+import { PublicRecipe } from './public-recipes/public-recipe.entity';
 
 @Module({
   imports: [
@@ -31,7 +33,7 @@ import { IngredientNutrition } from './nutrition/ingredient-nutrition.entity';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         ssl: config.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
-        entities: [Recipe, MealPlan, User, Cookbook, IngredientNutrition],
+        entities: [Recipe, MealPlan, User, Cookbook, IngredientNutrition, PublicRecipe],
         synchronize: config.get<string>('DB_SYNCHRONIZE') !== 'false',
       }),
     }),
@@ -43,6 +45,7 @@ import { IngredientNutrition } from './nutrition/ingredient-nutrition.entity';
     ScanModule,
     CookbooksModule,
     NutritionModule,
+    PublicRecipesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
