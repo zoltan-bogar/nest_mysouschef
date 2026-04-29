@@ -129,9 +129,10 @@ export class BillingService {
           lines: { data: { description: string | null }[] };
           billing_reason: string;
         };
-        if (inv.amount_paid === 0) break;
+        this.logger.log(`invoice.payment_succeeded: currency=${inv.currency} amount=${inv.amount_paid} email=${inv.customer_email}`);
+        if (inv.amount_paid === 0) { this.logger.log('Skipping: amount_paid is 0'); break; }
         // Only issue HUF invoices for now; EUR requires a paid Számlázz.hu plan
-        if (inv.currency !== 'huf') break;
+        if (inv.currency !== 'huf') { this.logger.log(`Skipping: currency is ${inv.currency}, not huf`); break; }
         try {
           const countryCode = inv.customer_address?.country ?? 'HU';
           // HUF is a zero-decimal currency in Stripe — no /100
