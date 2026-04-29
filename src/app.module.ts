@@ -10,10 +10,12 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ScanModule } from './scan/scan.module';
 import { CookbooksModule } from './cookbooks/cookbooks.module';
+import { NutritionModule } from './nutrition/nutrition.module';
 import { Recipe } from './recipes/recipe.entity';
 import { MealPlan } from './meal-plans/meal-plan.entity';
 import { User } from './users/user.entity';
 import { Cookbook } from './cookbooks/cookbook.entity';
+import { IngredientNutrition } from './nutrition/ingredient-nutrition.entity';
 
 @Module({
   imports: [
@@ -29,7 +31,7 @@ import { Cookbook } from './cookbooks/cookbook.entity';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         ssl: config.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
-        entities: [Recipe, MealPlan, User, Cookbook],
+        entities: [Recipe, MealPlan, User, Cookbook, IngredientNutrition],
         synchronize: config.get<string>('DB_SYNCHRONIZE') !== 'false',
       }),
     }),
@@ -40,6 +42,7 @@ import { Cookbook } from './cookbooks/cookbook.entity';
     AuthModule,
     ScanModule,
     CookbooksModule,
+    NutritionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
