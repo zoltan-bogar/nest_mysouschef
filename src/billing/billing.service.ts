@@ -117,6 +117,7 @@ export class BillingService {
           customer: string;
           customer_email: string;
           customer_name: string | null;
+          customer_address: { country?: string } | null;
           amount_paid: number;
           currency: string;
           lines: { data: { description: string | null }[] };
@@ -125,8 +126,7 @@ export class BillingService {
         // skip $0 invoices (trials, free plan adjustments)
         if (inv.amount_paid === 0) break;
         try {
-          const customer = await this.stripe.customers.retrieve(inv.customer) as { address?: { country?: string } };
-          const countryCode = customer.address?.country ?? 'HU';
+          const countryCode = inv.customer_address?.country ?? 'HU';
           const amountEur = inv.amount_paid / 100;
           const description = inv.lines.data[0]?.description ?? 'MySousChef előfizetés';
           await this.invoicingService.createInvoice({
@@ -137,7 +137,7 @@ export class BillingService {
             countryCode,
           });
         } catch (err) {
-          this.logger.error(`Failed to create Billingo invoice: ${err}`);
+          this.logger.error(`Failed to create Számlázz.hu invoice: ${err}`);
         }
         break;
       }
