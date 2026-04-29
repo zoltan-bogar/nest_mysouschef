@@ -125,19 +125,18 @@ export class BillingService {
           customer_name: string | null;
           customer_address: { country?: string } | null;
           amount_paid: number;
+          total: number;
           currency: string;
           lines: { data: { description: string | null }[] };
           billing_reason: string;
         };
-        const rawInv = event.data.object as unknown as Record<string, unknown>;
-        this.logger.log(`invoice.payment_succeeded raw: ${JSON.stringify({ currency: rawInv.currency, amount_paid: rawInv.amount_paid, total: rawInv.total, amount_due: rawInv.amount_due, subtotal: rawInv.subtotal, status: rawInv.status, email: rawInv.customer_email })}`);
-        if (inv.amount_paid === 0) { this.logger.log('Skipping: amount_paid is 0'); break; }
+        if (inv.total === 0) break;
         // Only issue HUF invoices for now; EUR requires a paid Számlázz.hu plan
-        if (inv.currency !== 'huf') { this.logger.log(`Skipping: currency is ${inv.currency}, not huf`); break; }
+        if (inv.currency !== 'huf') break;
         try {
           const countryCode = inv.customer_address?.country ?? 'HU';
-          // HUF is a zero-decimal currency in Stripe — no /100
-          const amount = inv.amount_paid;
+          // Use total (invoice document amount); HUF is zero-decimal so no /100
+          const amount = inv.total;
           const description = inv.lines.data[0]?.description ?? 'MySousChef előfizetés';
           await this.invoicingService.createInvoice({
             customerEmail: inv.customer_email,
