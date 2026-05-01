@@ -35,6 +35,9 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 /.claude
+/.junie
+/.agents
+skills-lock.json
 
 # Environment
 .env

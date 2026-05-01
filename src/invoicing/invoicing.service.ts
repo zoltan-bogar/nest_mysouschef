@@ -1,10 +1,30 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { InvoiceRequest } from './invoice-request.entity';
 
 const SZAMLAZZ_API = 'https://www.szamlazz.hu/szamla/';
 
 @Injectable()
 export class InvoicingService {
   private readonly logger = new Logger(InvoicingService.name);
+
+  constructor(
+    @InjectRepository(InvoiceRequest)
+    private readonly requestRepo: Repository<InvoiceRequest>,
+  ) {}
+
+  createRequest(userEmail: string): Promise<InvoiceRequest> {
+    return this.requestRepo.save({ userEmail });
+  }
+
+  listRequests(): Promise<InvoiceRequest[]> {
+    return this.requestRepo.find({ order: { requestedAt: 'DESC' } });
+  }
+
+  async markDone(id: number): Promise<void> {
+    await this.requestRepo.update(id, { status: 'done' });
+  }
 
   private get apiKey(): string {
     const key = process.env.SZAMLAZZ_API_KEY;
@@ -100,6 +120,12 @@ ${exchangeRateXml}  </fejlec>
     description: string;
     countryCode: string;
   }): Promise<void> {
+    // Számlázz.hu has no sandbox — every API call creates a real, billable document.
+    // Require explicit opt-in to avoid surprise charges during development/testing.
+    if (process.env.SZAMLAZZ_ENABLED !== 'true') {
+      this.logger.warn(`Számlázz.hu invoicing is disabled (SZAMLAZZ_ENABLED != true). Skipping invoice for ${params.customerEmail}`);
+      return;
+    }
     const today = new Date().toISOString().split('T')[0];
     const xml = this.buildXml({ ...params, today });
 

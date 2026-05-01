@@ -21,6 +21,7 @@ import { User } from './users/user.entity';
 import { Cookbook } from './cookbooks/cookbook.entity';
 import { IngredientNutrition } from './nutrition/ingredient-nutrition.entity';
 import { PublicRecipe } from './public-recipes/public-recipe.entity';
+import { InvoiceRequest } from './invoicing/invoice-request.entity';
 
 @Module({
   imports: [
@@ -36,7 +37,7 @@ import { PublicRecipe } from './public-recipes/public-recipe.entity';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         ssl: config.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
-        entities: [Recipe, MealPlan, User, Cookbook, IngredientNutrition, PublicRecipe, MealPlanTemplate],
+        entities: [Recipe, MealPlan, User, Cookbook, IngredientNutrition, PublicRecipe, MealPlanTemplate, InvoiceRequest],
         synchronize: config.get<string>('DB_SYNCHRONIZE') !== 'false',
       }),
     }),

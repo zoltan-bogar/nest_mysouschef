@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from '../users/users.module';
 import { CookbooksModule } from '../cookbooks/cookbooks.module';
 import { RecipesModule } from '../recipes/recipes.module';
+import { InvoicingModule } from '../invoicing/invoicing.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { AdminController } from './admin.controller';
@@ -13,6 +14,7 @@ import { AdminController } from './admin.controller';
     UsersModule,
     CookbooksModule,
     RecipesModule,
+    InvoicingModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
