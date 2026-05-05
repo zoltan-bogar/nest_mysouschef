@@ -44,15 +44,11 @@ export class UsersService {
     return this.repo.save({ email, passwordHash: '' });
   }
 
-  async checkAndIncrementScan(userId: number): Promise<{ allowed: boolean; remaining: number | null }> {
+  async checkAndIncrementScan(userId: number): Promise<{ allowed: boolean; remaining: number }> {
     const user = await this.repo.findOneBy({ id: userId });
     if (!user) return { allowed: false, remaining: 0 };
 
-    if (user.tier === 'expert') {
-      user.scansUsedThisMonth += 1;
-      await this.repo.save(user);
-      return { allowed: true, remaining: null };
-    }
+    const CAP = user.tier === 'expert' ? 100 : 20;
 
     const now = new Date();
     const reset = user.scansResetAt ? new Date(user.scansResetAt) : null;
@@ -65,14 +61,13 @@ export class UsersService {
       user.scansResetAt = now;
     }
 
-    const PRO_CAP = 20;
-    if (user.scansUsedThisMonth >= PRO_CAP) {
+    if (user.scansUsedThisMonth >= CAP) {
       if (needsReset) await this.repo.save(user);
       return { allowed: false, remaining: 0 };
     }
 
     user.scansUsedThisMonth += 1;
     await this.repo.save(user);
-    return { allowed: true, remaining: PRO_CAP - user.scansUsedThisMonth };
+    return { allowed: true, remaining: CAP - user.scansUsedThisMonth };
   }
 }

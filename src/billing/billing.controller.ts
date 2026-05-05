@@ -24,16 +24,18 @@ export class BillingController {
   @Post('checkout')
   async checkout(
     @Headers('x-user-email') email: string,
-    @Body() body: { tier: 'pro' | 'expert'; currency?: 'EUR' | 'HUF' },
+    @Body() body: { tier: 'pro' | 'expert'; currency?: 'EUR' | 'HUF'; cadence?: 'monthly' | 'annual' },
   ): Promise<{ url: string }> {
     if (!['pro', 'expert'].includes(body.tier)) throw new BadRequestException('Invalid tier');
     const currency = body.currency === 'HUF' ? 'HUF' : 'EUR';
+    const cadence = body.cadence === 'annual' ? 'annual' : 'monthly';
     const user = await this.usersService.findByEmail(email);
     if (!user) throw new NotFoundException('User not found');
     const url = await this.billingService.createCheckoutSession(
       user,
       body.tier,
       currency,
+      cadence,
       `${APP_URL}/upgrade/success?tier=${body.tier}`,
       `${APP_URL}/upgrade`,
     );

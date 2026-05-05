@@ -33,7 +33,10 @@ export class ScanController {
 
     const result = await this.usersService.checkAndIncrementScan(user.id);
     if (!result.allowed) {
-      throw new ForbiddenException({ message: 'Monthly scan limit reached. Upgrade to Expert for unlimited scans.', code: 'SCAN_LIMIT_REACHED' });
+      const message = user.tier === 'expert'
+        ? 'Monthly scan limit of 100 reached.'
+        : 'Monthly scan limit reached. Upgrade to Expert for 100 scans/month.';
+      throw new ForbiddenException({ message, code: 'SCAN_LIMIT_REACHED' });
     }
 
     return this.scanService.extractRecipe(file.buffer, file.mimetype);

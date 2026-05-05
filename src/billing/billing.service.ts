@@ -7,14 +7,26 @@ import { InvoicingService } from '../invoicing/invoicing.service';
 type StripeInstance = InstanceType<typeof Stripe>;
 type StripeEvent = ReturnType<StripeInstance['webhooks']['constructEvent']>;
 
-const PRICE_IDS: Record<string, Record<'EUR' | 'HUF', string>> = {
+const PRICE_IDS: Record<string, Record<'EUR' | 'HUF', Record<'monthly' | 'annual', string>>> = {
   pro: {
-    EUR: process.env.STRIPE_PRO_PRICE_ID ?? '',
-    HUF: process.env.STRIPE_PRO_HUF_PRICE_ID ?? '',
+    EUR: {
+      monthly: process.env.STRIPE_PRO_PRICE_ID ?? '',
+      annual: process.env.STRIPE_PRO_ANNUAL_PRICE_ID ?? '',
+    },
+    HUF: {
+      monthly: process.env.STRIPE_PRO_HUF_PRICE_ID ?? '',
+      annual: process.env.STRIPE_PRO_HUF_ANNUAL_PRICE_ID ?? '',
+    },
   },
   expert: {
-    EUR: process.env.STRIPE_EXPERT_PRICE_ID ?? '',
-    HUF: process.env.STRIPE_EXPERT_HUF_PRICE_ID ?? '',
+    EUR: {
+      monthly: process.env.STRIPE_EXPERT_PRICE_ID ?? '',
+      annual: process.env.STRIPE_EXPERT_ANNUAL_PRICE_ID ?? '',
+    },
+    HUF: {
+      monthly: process.env.STRIPE_EXPERT_HUF_PRICE_ID ?? '',
+      annual: process.env.STRIPE_EXPERT_HUF_ANNUAL_PRICE_ID ?? '',
+    },
   },
 };
 
@@ -43,9 +55,9 @@ export class BillingService {
     return this._stripe;
   }
 
-  async createCheckoutSession(user: User, tier: 'pro' | 'expert', currency: 'EUR' | 'HUF', successUrl: string, cancelUrl: string): Promise<string> {
-    const priceId = PRICE_IDS[tier]?.[currency];
-    if (!priceId) throw new Error(`No price configured for tier: ${tier} / ${currency}`);
+  async createCheckoutSession(user: User, tier: 'pro' | 'expert', currency: 'EUR' | 'HUF', cadence: 'monthly' | 'annual', successUrl: string, cancelUrl: string): Promise<string> {
+    const priceId = PRICE_IDS[tier]?.[currency]?.[cadence];
+    if (!priceId) throw new Error(`No price configured for tier: ${tier} / ${currency} / ${cadence}`);
 
     let customerId = user.stripeCustomerId ?? undefined;
     if (!customerId) {
